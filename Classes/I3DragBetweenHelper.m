@@ -228,7 +228,8 @@
     NSLog(@"View we're checking: %@", view);
     
     if(![view isKindOfClass:[UITableView class]] &&
-       ![view isKindOfClass:[UICollectionView class]]){
+       ![view isKindOfClass:[UICollectionView class]] &&
+       view != nil){
         
         [NSException raise:@"View is invalid type"
                     format:@"View object passed must either be a table or collection view. Its a %@", NSStringFromClass([view class])];
@@ -266,7 +267,6 @@
 
 -(BOOL) startDragFromView:(UIView*) container atPoint:(CGPoint) point{
 
-
     UIView* cell;
 
     NSIndexPath* index = [self determineIndexForContainer:container
@@ -286,11 +286,11 @@
 
     /* Check in the delegate whether its draggable */
     
-    if(self.delegate && [self.delegate respondsToSelector:@selector(isCellAtIndexPathDraggable:inContainer:)]){
+    if(self.delegate && [self.delegate respondsToSelector:@selector(isCellAtIndexPathDraggable:inContainer:fromHelper:)]){
         
-        NSLog(@"Draggable %@ from delegate? %@", container, [self.delegate isCellAtIndexPathDraggable:index inContainer:container] ? @"YES" : @"NO");
+        NSLog(@"Draggable %@ from delegate? %@", container, [self.delegate isCellAtIndexPathDraggable:index inContainer:container fromHelper:self] ? @"YES" : @"NO");
         
-        isDraggable = isDraggable && [self.delegate isCellAtIndexPathDraggable:index inContainer:container];
+        isDraggable = isDraggable && [self.delegate isCellAtIndexPathDraggable:index inContainer:container fromHelper:self];
     }
     
     
@@ -350,8 +350,11 @@
     
     /* Translate the cell's coords to global coords */
     
+    
     self.draggingView.frame = [self.superview convertRect:cellFrame fromView:container];
     
+    NSLog(@"Container rect: %@", NSStringFromCGRect(container.frame));
+
     [self.draggingView setHidden:NO];
     
     NSLog(@"Adding dragging data: %d, draggingView %@", [index row], self.draggingView);
@@ -391,19 +394,17 @@
         
         /* Calls delegate to delete item at index path*/
         
-        if(isSrc && [self.delegate respondsToSelector:@selector(itemFromSrcDeletedAtIndexPath:)]){
+        if(isSrc && [self.delegate respondsToSelector:@selector(itemFromSrcDeletedAtIndexPath:fromHelper:)]){
             
             NSLog(@"Deletion handler for Src triggered");
             
-            [self.delegate performSelector:@selector(itemFromSrcDeletedAtIndexPath:)
-                                withObject:self.draggingIndexPath];
+            [self.delegate itemFromSrcDeletedAtIndexPath:self.draggingIndexPath fromHelper:self];
         }
-        else if(!isSrc && [self.delegate respondsToSelector:@selector(itemFromDstDeletedAtIndexPath:)]){
+        else if(!isSrc && [self.delegate respondsToSelector:@selector(itemFromDstDeletedAtIndexPath:fromHelper:)]){
             
             NSLog(@"Deletion handler for Dst triggered");
 
-            [self.delegate performSelector:@selector(itemFromDstDeletedAtIndexPath:)
-                                withObject:self.draggingIndexPath];
+            [self.delegate itemFromDstDeletedAtIndexPath:self.draggingIndexPath fromHelper:self];
             
         }
         else{
@@ -458,22 +459,16 @@
         
         
         if(self.isDraggingFromSrcCollection && self.delegate &&
-           [self.delegate respondsToSelector:@selector(dragFromSrcSnappedBackFromIndexPath:)]){
+           [self.delegate respondsToSelector:@selector(dragFromSrcSnappedBackFromIndexPath:fromHelper:)]){
             
             
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-            [self.delegate performSelector:@selector(dragFromSrcSnappedBackFromIndexPath:) withObject:dragginIndex];
-#pragma clang diagnostic pop
+            [self.delegate dragFromSrcSnappedBackFromIndexPath:dragginIndex fromHelper:self];
             
         }
         else if(!self.isDraggingFromSrcCollection && self.delegate &&
-                [self.delegate respondsToSelector:@selector(dragFromDstSnappedBackFromIndexPath:)]){
+                [self.delegate respondsToSelector:@selector(dragFromDstSnappedBackFromIndexPath:fromHelper:)]){
             
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-            [self.delegate performSelector:@selector(dragFromDstSnappedBackFromIndexPath:) withObject:dragginIndex];
-#pragma clang diagnostic pop
+            [self.delegate dragFromDstSnappedBackFromIndexPath:dragginIndex fromHelper:self];
             
         }        
 
@@ -531,7 +526,7 @@
 
 
 -(void) handleDragStarted:(UIPanGestureRecognizer*) gestureRecognizer{
-        
+    
     CGPoint pointInDst = [gestureRecognizer locationInView:self.dstView];
     CGPoint pointInSrc = [gestureRecognizer locationInView:self.srcView];
     self.isDragging = YES;
@@ -656,10 +651,10 @@
         
         /* Any extra starting translations should be applied in the delegate */
         
-        if([self.delegate respondsToSelector:@selector(dragFromSrcStartedAtIndexPath:)]){
+        if([self.delegate respondsToSelector:@selector(dragFromSrcStartedAtIndexPath:fromHelper:)]){
             
             NSIndexPath* path = [self determineIndexForContainer:self.dstView atPoint:point forCell:nil];
-            [self.delegate dragFromSrcStartedAtIndexPath:path];
+            [self.delegate dragFromSrcStartedAtIndexPath:path fromHelper:self];
         }
 
     }
@@ -682,8 +677,8 @@
     
     BOOL shouldSnapBack = YES;
     
-    if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOutsideAtPoint:fromSrcIndexPath:)]){
-        shouldSnapBack = [self.delegate droppedOutsideAtPoint:point fromSrcIndexPath:self.draggingIndexPath];
+    if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOutsideAtPoint:fromSrcIndexPath:fromHelper:)]){
+        shouldSnapBack = [self.delegate droppedOutsideAtPoint:point fromSrcIndexPath:self.draggingIndexPath fromHelper:self];
     }
 
     if(shouldSnapBack){
@@ -718,8 +713,8 @@
         
         /* Check in the delegate whether its exchangable */
         
-        if(self.delegate && [self.delegate respondsToSelector:@selector(isCellInSrcAtIndexPathExchangable:withCellAtIndexPath:)]){
-            isExchangable =  [self.delegate isCellInSrcAtIndexPathExchangable:index withCellAtIndexPath:self.draggingIndexPath];
+        if(self.delegate && [self.delegate respondsToSelector:@selector(isCellInSrcAtIndexPathExchangable:withCellAtIndexPath:fromHelper:)]){
+            isExchangable =  [self.delegate isCellInSrcAtIndexPathExchangable:index withCellAtIndexPath:self.draggingIndexPath fromHelper:self];
         }
         
         if(!isExchangable){
@@ -754,9 +749,9 @@
         
         [self animateDummyExchange:cell inContainer:self.srcView withCompletionBlock:^{
             
-            if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOnSrcAtIndexPath:fromSrcIndexPath:)]){
+            if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOnSrcAtIndexPath:fromSrcIndexPath:fromHelper:)]){
                 
-                [self.delegate droppedOnSrcAtIndexPath:index fromSrcIndexPath:self.draggingIndexPath];
+                [self.delegate droppedOnSrcAtIndexPath:index fromSrcIndexPath:self.draggingIndexPath fromHelper:self];
                 [self reloadCellInContainer:self.srcView atIndexPaths:@[index, self.draggingIndexPath]];
             }
             
@@ -782,7 +777,7 @@
 -(void) handleDragFromSrcStoppedInDstAtPoint:(CGPoint) point{
     
     if(self.doesDstRecieveSrc
-       && [self.delegate respondsToSelector:@selector(droppedOnDstAtIndexPath:fromSrcIndexPath:)]
+       && [self.delegate respondsToSelector:@selector(droppedOnDstAtIndexPath:fromSrcIndexPath:fromHelper:)]
        && self.draggingView){
         
         NSIndexPath* index = [self determineIndexForContainer:self.dstView atPoint:point forCell:nil];
@@ -796,8 +791,8 @@
             
         }
 
-        if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOnDstAtIndexPath:fromSrcIndexPath:)]){
-            [self.delegate droppedOnDstAtIndexPath:index fromSrcIndexPath:self.draggingIndexPath];
+        if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOnDstAtIndexPath:fromSrcIndexPath:fromHelper:)]){
+            [self.delegate droppedOnDstAtIndexPath:index fromSrcIndexPath:self.draggingIndexPath fromHelper:self];
         }
         
         // TODO Implement drop animation here
@@ -825,10 +820,10 @@
         
         /* Any extra starting translations should be applied in the delegate */
         
-        if([self.delegate respondsToSelector:@selector(dragFromDstStartedAtIndexPath:)]){
+        if([self.delegate respondsToSelector:@selector(dragFromDstStartedAtIndexPath:fromHelper:)]){
             
             NSIndexPath* path = [self determineIndexForContainer:self.dstView atPoint:point forCell:nil];
-            [self.delegate dragFromDstStartedAtIndexPath:path];
+            [self.delegate dragFromDstStartedAtIndexPath:path fromHelper:self];
             
         }
         
@@ -850,8 +845,8 @@
 
     BOOL shouldSnapBack = YES;
     
-    if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOutsideAtPoint:fromDstIndexPath:)]){
-        shouldSnapBack = [self.delegate droppedOutsideAtPoint:point fromDstIndexPath:self.draggingIndexPath];
+    if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOutsideAtPoint:fromDstIndexPath:fromHelper:)]){
+        shouldSnapBack = [self.delegate droppedOutsideAtPoint:point fromDstIndexPath:self.draggingIndexPath fromHelper:self];
     }
     
     if(shouldSnapBack){
@@ -868,7 +863,7 @@
 -(void) handleDragFromDstStoppedInSrcAtPoint:(CGPoint) point{
     
     if(self.doesSrcRecieveDst
-       && [self.delegate respondsToSelector:@selector(droppedOnSrcAtIndexPath:fromDstIndexPath:)]
+       && [self.delegate respondsToSelector:@selector(droppedOnSrcAtIndexPath:fromDstIndexPath:fromHelper:)]
        && self.draggingView){
     
         NSIndexPath* index = [self determineIndexForContainer:self.srcView atPoint:point forCell:nil];
@@ -882,8 +877,8 @@
             
         }
         
-        if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOnSrcAtIndexPath:fromDstIndexPath:)]){
-            [self.delegate droppedOnSrcAtIndexPath:index fromDstIndexPath:self.draggingIndexPath];
+        if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOnSrcAtIndexPath:fromDstIndexPath:fromHelper:)]){
+            [self.delegate droppedOnSrcAtIndexPath:index fromDstIndexPath:self.draggingIndexPath fromHelper:self];
         }
         
 
@@ -933,9 +928,9 @@
         
         /* Check in the delegate whether its exchangable */
         
-        if(self.delegate && [self.delegate respondsToSelector:@selector(isCellInDstAtIndexPathExchangable:withCellAtIndexPath:)]){
+        if(self.delegate && [self.delegate respondsToSelector:@selector(isCellInDstAtIndexPathExchangable:withCellAtIndexPath:fromHelper:)]){
             
-            isExchangable = [self.delegate isCellInDstAtIndexPathExchangable:index withCellAtIndexPath:self.draggingIndexPath];
+            isExchangable = [self.delegate isCellInDstAtIndexPathExchangable:index withCellAtIndexPath:self.draggingIndexPath fromHelper:self];
         }
         
         if(!isExchangable){
@@ -968,9 +963,9 @@
         
         [self animateDummyExchange:cell inContainer:self.dstView withCompletionBlock:^{
             
-            if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOnDstAtIndexPath:fromDstIndexPath:)]){
+            if(self.delegate && [self.delegate respondsToSelector:@selector(droppedOnDstAtIndexPath:fromDstIndexPath:fromHelper:)]){
                 
-                [self.delegate droppedOnDstAtIndexPath:index fromDstIndexPath:self.draggingIndexPath];
+                [self.delegate droppedOnDstAtIndexPath:index fromDstIndexPath:self.draggingIndexPath fromHelper:self];
                 [self reloadCellInContainer:self.dstView atIndexPaths:@[index, self.draggingIndexPath]];
                 
             }

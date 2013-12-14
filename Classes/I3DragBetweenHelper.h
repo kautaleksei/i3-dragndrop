@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 
 
-
+@class I3DragBetweenHelper;
 
 @protocol I3DragBetweenDelegate
 
@@ -19,42 +19,51 @@
 /** Called when the dragging view has been dropped nowhere and the
      snap-back animation has ended. */
 
--(void) dragFromDstSnappedBackFromIndexPath:(NSIndexPath*) path;
+-(void) dragFromDstSnappedBackFromIndexPath:(NSIndexPath*) path
+                                 fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** Called when the dragging view has been dropped nowhere and the
      snap-back animation has ended. */
 
--(void) dragFromSrcSnappedBackFromIndexPath:(NSIndexPath*) path;
+-(void) dragFromSrcSnappedBackFromIndexPath:(NSIndexPath*) path
+                                 fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** Called if you implement droppedOutsideAtPoint:fromDstIndexPath: to return
      NO after the 'deletion' animation sequence. */
 
--(void) itemFromDstDeletedAtIndexPath:(NSIndexPath*) path;
+-(void) itemFromDstDeletedAtIndexPath:(NSIndexPath*) path
+                           fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** Called if you implement droppedOutsideAtPoint:fromSrcIndexPath: to return
      NO after the 'deletion' animation sequence. */
 
--(void) itemFromSrcDeletedAtIndexPath:(NSIndexPath*) path;
+-(void) itemFromSrcDeletedAtIndexPath:(NSIndexPath*) path
+                           fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** A drag from the destination table/collection was started */
 
--(void) dragFromDstStartedAtIndexPath:(NSIndexPath*) path;
+-(void) dragFromDstStartedAtIndexPath:(NSIndexPath*) path
+                           fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** A drag from the source table/collection was stopped inside of the
      src view. This should be implemented to make data changes. */
 
--(void) droppedOnSrcAtIndexPath:(NSIndexPath*) to fromDstIndexPath:(NSIndexPath*) from;
+-(void) droppedOnSrcAtIndexPath:(NSIndexPath*) to
+               fromDstIndexPath:(NSIndexPath*) from
+                     fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** A drag from the source table/collection was stopped inside of the
      destination view. */
 
--(void) droppedOnDstAtIndexPath:(NSIndexPath*) to fromDstIndexPath:(NSIndexPath*) from;
+-(void) droppedOnDstAtIndexPath:(NSIndexPath*) to
+               fromDstIndexPath:(NSIndexPath*) from
+                     fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** A drag from the destination table/collection was stopped ouside of 
@@ -62,31 +71,39 @@
      whether or not to snap the view back or transition it 'out' with
      the default scale animation. */
 
--(BOOL) droppedOutsideAtPoint:(CGPoint) pointIn fromDstIndexPath:(NSIndexPath*) from;
+-(BOOL) droppedOutsideAtPoint:(CGPoint) pointIn
+             fromDstIndexPath:(NSIndexPath*) from
+                   fromHelper:(I3DragBetweenHelper*) sender;
 
 /** Implemented to determine whether two cells are exchangable inside of
      a the dst collection/table. */
 
 -(BOOL) isCellInDstAtIndexPathExchangable:(NSIndexPath*) to
-                      withCellAtIndexPath:(NSIndexPath*) from;
+                      withCellAtIndexPath:(NSIndexPath*) from
+                               fromHelper:(I3DragBetweenHelper*) sender;
 
 
 
 /** A drag from the srource table/collection was started */
 
--(void) dragFromSrcStartedAtIndexPath:(NSIndexPath*) path;
+-(void) dragFromSrcStartedAtIndexPath:(NSIndexPath*) path
+                           fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** A drag from the source table/collection was stopped inside of the
      src view. This should be implemented to make data changes. */
 
--(void) droppedOnSrcAtIndexPath:(NSIndexPath*) to fromSrcIndexPath:(NSIndexPath*) from;
+-(void) droppedOnSrcAtIndexPath:(NSIndexPath*) to
+               fromSrcIndexPath:(NSIndexPath*) from
+                     fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** A drag from the source table/collection was stopped inside of the
      destination view. */
 
--(void) droppedOnDstAtIndexPath:(NSIndexPath*) to fromSrcIndexPath:(NSIndexPath*) from;
+-(void) droppedOnDstAtIndexPath:(NSIndexPath*) to
+               fromSrcIndexPath:(NSIndexPath*) from
+                     fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** A drag from the source table/collection was stopped ouside of both
@@ -94,14 +111,17 @@
      whether or not to snap the view back or transition it 'out' with 
      the shrink animation. */
 
--(BOOL) droppedOutsideAtPoint:(CGPoint) pointIn fromSrcIndexPath:(NSIndexPath*) from;
+-(BOOL) droppedOutsideAtPoint:(CGPoint) pointIn
+             fromSrcIndexPath:(NSIndexPath*) from
+                   fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** Implemented to determine whether two cells are exchangable inside of
      a the src collection/table. */
 
 -(BOOL) isCellInSrcAtIndexPathExchangable:(NSIndexPath*) to
-                      withCellAtIndexPath:(NSIndexPath*) from;
+                      withCellAtIndexPath:(NSIndexPath*) from
+                               fromHelper:(I3DragBetweenHelper*) sender;
 
 
 /** Implemented to determine whether a specific cell is draggable from
@@ -109,14 +129,16 @@
      should be implemented in the delegate to determine which one the delegate
      applies to. If not implemented assumed YES. */
 
--(BOOL) isCellAtIndexPathDraggable:(NSIndexPath*) index inContainer:(UIView*) container;
+-(BOOL) isCellAtIndexPathDraggable:(NSIndexPath*) index inContainer:(UIView*) container
+                        fromHelper:(I3DragBetweenHelper*) sender;
 
 
 
 
 /* Generic view draggin handler */
 
--(void) dragginAtPoint:(CGPoint) pointIn;
+-(void) dragginAtPoint:(CGPoint) pointIn
+            fromHelper:(I3DragBetweenHelper*) sender;
 
 
 

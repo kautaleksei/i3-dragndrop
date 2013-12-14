@@ -141,6 +141,15 @@ Recent Changes
 
 - The helper no longer uses the actual sub view for the dragging cell - now, instead it generates a dummy cell for dragging. Its left up to the user to 'hide' the cell whilst its being dragged in the appropriate delegate methods, see Example Case 1. This breaks anything using the previous version.
 - 'Hide' functionality has been added back to the helper in the form of the hide[Dst | Src]DraggingCell properties. This sets the original cell's alpha value to 0.001 while dragging is taking place. We have re-introducted this concept because UICollectionView sometimes returned nil for cellForItemAtIndexPath in the helper's delegate, after the collection had been reordered. This resulted in a buggy 'sometimes hidden' collection cell whilst dragging.
+- Delegate refactoring: I'm currently in the process of updating the delegate protocol to send the helper 'sender' object along as well to makeit easier for 1 class to be delegates for multiple helpers. This is reflected in the current branch and has *BROKEN ALL THE TESTS TEMPORARILY*, so TestApp on this branch won't compile.
+
+
+Limitations
+-----------
+
+Having used this class in a separate project, I have realised that there are several limitations:
+- You can't have overlapping source and destination tables
+- If you're implementing a subclass of UITableViewCell or UICollectioViewCell you need to override NSCoder methods to encode/decode your cell, so that when the helper archives/unarchives it for duplication it still has all your custom properties. I will provide examples on how to do this for the next merge to dev/master.
 
 
 Notes on App Store Approval
